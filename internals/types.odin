@@ -1,6 +1,6 @@
 package internals
 
-MIN_ELEMENT_NUMBER: u32 = 1024
+MIN_ELEMENT_NUMBER :: 1024
 
 HandleId :: u32
 Generation :: u32
