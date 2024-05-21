@@ -1,19 +1,19 @@
-package handle_containers
+package internals 
 
-Typed_Handle :: struct($T: typeid) {
+Handle :: struct {
 	idx: HandleId,
 	gen: Generation,
 }
 
-Typed_Handle_Allocator :: struct($T: typeid) {
+Handle_Allocator :: struct {
 	free:         [dynamic]HandleId,
 	alive:        [dynamic]Handle_Info,
 	current_size: u32,
 }
 
-create_typed_handle_allocator :: proc($T:typeid, min_size := MIN_HANDLE_NUM) -> Typed_Handle_Allocator(T) {
+create_handle_allocator :: proc(min_size := MIN_ELEMENT_NUMBER) -> Handle_Allocator {
 	return(
-		Typed_Handle_Allocator(T) {
+		Handle_Allocator {
 			free = make([dynamic]HandleId, 0, min_size),
 			alive = make([dynamic]Handle_Info, 0, min_size),
 			current_size = 0,
@@ -21,12 +21,12 @@ create_typed_handle_allocator :: proc($T:typeid, min_size := MIN_HANDLE_NUM) -> 
 	)
 }
 
-destroy_typed_handle_allocator :: proc(allocator: Typed_Handle_Allocator($T)) {
+destroy_handle_allocator :: proc(allocator: Handle_Allocator) {
 	delete(allocator.free)
 	delete(allocator.alive)
 }
 
-alloc_typed_handle :: proc(allocator: ^Typed_Handle_Allocator($T)) -> Typed_Handle(T) {
+alloc_handle :: proc(allocator: ^Handle_Allocator) -> Handle {
 	idx, ok := pop_safe(&allocator.free)
 	if ok {
 		info := &allocator.alive[idx]
@@ -35,16 +35,16 @@ alloc_typed_handle :: proc(allocator: ^Typed_Handle_Allocator($T)) -> Typed_Hand
 		}
 		info.generation += 1
 		info.is_alive = true
-		return Typed_Handle(T){idx = idx, gen = info.generation}
+		return Handle{idx = idx, gen = info.generation}
 	} else {
 		allocator.current_size += 1
 		append(&allocator.alive, Handle_Info{generation = 1, is_alive = true})
-		return Typed_Handle(T){idx = allocator.current_size - 1, gen = 1}
+		return Handle{idx = allocator.current_size - 1, gen = 1}
 	}
 }
 
-free_typed_handle :: proc(allocator: ^Typed_Handle_Allocator($T), handle: Typed_Handle(T)) -> bool {
-	if is_typed_handle_alive(allocator, handle) {
+free_handle :: proc(allocator: ^Handle_Allocator, handle: Handle) -> bool {
+	if is_handle_alive(allocator, handle) {
 		info := &allocator.alive[handle.idx]
 		info.is_alive = false
 
@@ -55,7 +55,7 @@ free_typed_handle :: proc(allocator: ^Typed_Handle_Allocator($T), handle: Typed_
 	return false
 }
 
-is_typed_handle_alive :: proc(allocator: ^Typed_Handle_Allocator($T), handle: Typed_Handle(T)) -> bool {
+is_handle_alive :: proc(allocator: ^Handle_Allocator, handle: Handle) -> bool {
 	info := &allocator.alive[handle.idx]
 	if info == nil {
 		return false

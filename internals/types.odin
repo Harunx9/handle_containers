@@ -1,6 +1,6 @@
-package handle_containers
+package internals
 
-MIN_HANDLE_NUM : u32 = 1024
+MIN_ELEMENT_NUMBER: u32 = 1024
 
 HandleId :: u32
 Generation :: u32
